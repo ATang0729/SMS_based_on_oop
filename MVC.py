@@ -1,11 +1,9 @@
 '''定义模块的基本结构——MVC结构
 
 类Model定义了数据存取操作
-抽象类View的子类定义了GUI界面的显示
-抽象类Controller的子类定义了Model和View之间的交互
+抽象类View_Controller的子类定义了交互界面以及Model和View之间的交互
 '''
-from re import M
-from unittest import result
+
 import pymysql
 import hashlib
 
@@ -28,7 +26,7 @@ class Model(object):
             print('连接时产生错误：',e)
 
 ###############完成登录注册功能######################
-    def Admin_register(self,adminName:str,sex:str,password:str):
+    def Admin_register(self,adminName:str,password:str,sex:str):
         '''完成管理员注册
         
         adminName为管理员姓名，sex为其性别
@@ -69,7 +67,7 @@ class Model(object):
             if result:
                 password_encrypted = hashlib.md5(password.encode('utf-8')).hexdigest()
                 if password_encrypted == result[3]:
-                    return adminID
+                    return result[1]  #返回adminName
                 else:
                     return False
             else:
@@ -130,6 +128,23 @@ class Model(object):
             cur.close()
             conn.close()
     
+    def get_available_goods_info(self)->list[str]:
+        '''获取未上架的商品ID列表'''
+        conn,cur = Model.get_con()
+        try:
+            sql = """SELECT productID FROM products WHERE isPlaced=FALSE"""
+            cur.execute(sql)
+            result = cur.fetchall()
+            vailable_productIDs_list = []
+            for i in result:
+                vailable_productIDs_list.append(str(i[0]))
+            return vailable_productIDs_list
+        except Exception as e:
+            print('获取未上架的商品ID列表时产生错误：',e)
+        finally:
+            cur.close()
+            conn.close()
+
     def add_good_info(self,productName:str,unitPrice:float,unitInStock:int):
         '''添加商品信息
         
@@ -206,6 +221,23 @@ class Model(object):
             cur.close()
             conn.close()
 
+    def get_available_shelves(self)->list[str]:
+        '''获取可用的货架ID列表'''
+        conn, cur = Model.get_con()
+        try:
+            sql = """SELECT shelfID FROM shelves WHERE isUsed=FALSE"""
+            cur.execute(sql)
+            result = cur.fetchall()
+            vailable_shelves = []
+            for i in result:
+                vailable_shelves.append(str(i[0]))
+            return vailable_shelves
+        except Exception as e:
+            print('获取可用的货架ID列表时产生错误：', e)
+        finally:
+            cur.close()
+            conn.close()
+
     def add_shelf_info(self,shelfLocation:str):
         '''添加货架位置信息
         
@@ -265,10 +297,10 @@ class Model(object):
 
 ###############完成库存信息管理功能######################
     def get_items_info(self)->list:
-        '''获取库存信息'''
+        '''获取库存信息，调用视图items_report_detailed'''
         conn,cur = Model.get_con()
         try:
-            sql_pattern = """select * from items"""
+            sql_pattern = """select * from items_report_detailed"""
             sql = sql_pattern.format()
             cur.execute(sql)
             result = cur.fetchall()
@@ -281,7 +313,7 @@ class Model(object):
         finally:
             cur.close()
             conn.close()
-    
+
     def add_item_info(self,productID:int,shelfID:int,adminID:int):
         '''商品入库管理
 
@@ -315,7 +347,7 @@ class Model(object):
             conn.close()
 
 
-class View(object):
+class View_Controller(object):
     def __init__(self) -> None:
         '''初始化页面'''
         raise NotImplementedError
@@ -324,7 +356,6 @@ class View(object):
         '''将数据显示到页面上'''
         raise NotImplementedError
 
-class Controller(object):
     def onInsert(self):
         '''触发数据插入事件'''
         raise NotImplementedError
@@ -340,4 +371,7 @@ class Controller(object):
 
 if __name__ == '__main__':
     model = Model()
-    model.Admin_register('李四','男','123456')
+    # model.Admin_register('李四','男','123456')
+    info = model.get_goods_info()
+    print(list(zip(*info))[1])
+    print(list(zip(i for i in info))[1])

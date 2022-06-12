@@ -10,7 +10,7 @@ model = MVC.Model()
 class view_controller(MVC.View_Controller):
     
     #用于在内存中存储信息，并在页面退出时候将信息写入JSON文件，用作数据备份
-    #每一次调用实例方法populate_products_info时，都会重写一次下列数据
+    #每一次调用实例方法populate_data时，都会重写一次下列数据
     __products = {}  #保存产品信息的字典：product_id:name,price,number,isPlaced
 
     class ProductWindow(wx.Dialog):
@@ -176,6 +176,12 @@ class view_controller(MVC.View_Controller):
             if len(name) == 0 or len(price) == 0 or len(number) == 0:
                 wx.MessageBox('请输入完整的商品信息！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
+            #检查商品名称是否重复
+            info = model.get_goods_info()
+            pnames = list(zip(*info))[1]
+            if name in pnames:
+                wx.MessageBox('商品名称重复！', '提示', wx.OK | wx.ICON_INFORMATION)
+                return None
             model.add_good_info(name, price, number)
             self.populate_data()
 
@@ -189,6 +195,12 @@ class view_controller(MVC.View_Controller):
             #检查输入的商品信息是否合法
             if len(pid) == 0 or len(name) == 0 or len(price) == 0 or len(number) == 0:
                 wx.MessageBox('请输入完整的商品信息！', '提示', wx.OK | wx.ICON_INFORMATION)
+                return None
+            #检查商品名称是否重复
+            info = model.get_goods_info()
+            pnames = list(zip(*info))[1]
+            if name in pnames:
+                wx.MessageBox('商品名称重复！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
             model.alter_good_info(pid, name, price, number)
             self.populate_data()

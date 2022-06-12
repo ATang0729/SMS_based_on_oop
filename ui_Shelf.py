@@ -160,7 +160,7 @@ class view_controller(MVC.View_Controller):
                 return None
             #检查货架位置是否已存在
             info = model.get_shelves_info()
-            locs = list(zip(info[0],info[1]))[1]
+            locs = list(zip(*[i for i in info]))[1]
             if location in locs:
                 wx.MessageBox('货架位置已存在！', '警告', wx.OK | wx.ICON_WARNING)
                 return None
@@ -176,9 +176,14 @@ class view_controller(MVC.View_Controller):
             if len(shelf_id) == 0 or len(location) == 0:
                 wx.MessageBox('请输入货架信息！', '警告', wx.OK | wx.ICON_WARNING)
                 return None
-                        #检查货架位置是否已存在
+            #检查货架编号是否存在
             info = model.get_shelves_info()
-            locs = list(zip(info[0],info[1]))[1]
+            sid = list(zip(*[i for i in info]))[0]
+            if shelf_id not in sid:
+                wx.MessageBox('货架编号不存在！', '警告', wx.OK | wx.ICON_WARNING)
+                return None
+            #检查货架位置是否已存在
+            locs = list(zip(*[i for i in info]))[1]
             if location in locs:
                 wx.MessageBox('货架位置已存在！', '警告', wx.OK | wx.ICON_WARNING)
                 return None
@@ -206,3 +211,4 @@ class view_controller(MVC.View_Controller):
             with open('shelves.json', 'w', encoding='utf-8') as f:
                 f.write(json.dumps(view_controller.__shelves, ensure_ascii=False))
             self.Close(True)
+
