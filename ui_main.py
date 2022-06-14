@@ -7,6 +7,7 @@ import ui_changePwd
 import ui_product
 import ui_Item
 import ui_Shelf
+from wx.adv import AnimationCtrl
 
 model = MVC.Model()
 
@@ -14,7 +15,10 @@ class view_controller(MVC.View_Controller):
     class MainWindow(wx.Frame):
         """创建主窗口程序类"""
         def __init__(self, parent, title, userid, username):
-            wx.Frame.__init__(self, parent, title=title, size=(600, 400))
+            wx.Frame.__init__(self, parent, title=title, size=(515, 420))
+            self.animation = AnimationCtrl(self, -1)
+            self.animation.LoadFile(r'D:\桌面\东华\教学\2s\oop\作业\20-期末大作业-基于数据库和gui的库存管理系统\StockManagementSystem\images\animation.gif')
+            self.animation.Play()
             self.userid = userid
             self.username = username
             self.CreateStatusBar() #创建状态栏
@@ -49,6 +53,7 @@ class view_controller(MVC.View_Controller):
             self.Bind(wx.EVT_MENU, self.OnAbout, menuAbout)
 
             self.SetMenuBar(menuBar)
+            self.Fit()
 
         #创建绑定事件的方法
         def OnReLogin(self, event):

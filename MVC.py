@@ -5,9 +5,11 @@
 '''
 
 import pymysql
-import hashlib
+import abc
+from RSA_AES import key_generate, aes_encrypt, aes_decrypt
 
 class Model(object):
+    '''定义了所有与数据库交互的操作'''
     @staticmethod
     def get_con():
         '''建立数据库联系，返回连接和游标'''
@@ -26,34 +28,47 @@ class Model(object):
             print('连接时产生错误：',e)
 
 ###############完成登录注册功能######################
-    def Admin_register(self,adminName:str,password:str,sex:str):
+    def Admin_register(self,adminName:str,password:str,sex:str)->bool:
         '''完成管理员注册
         
         adminName为管理员姓名，sex为其性别
-        password为输入的密码，密码会在采用md5算法进行哈希加密后被存入数据库'''
+        password为输入的密码，密码会在采用md5算法进行哈希加密后被存入数据库
+        
+        返回布尔值，若注册成功，返回True；否则返回False'''
         conn,cur = Model.get_con()
-        # 对密码进行哈希加密
-        password_encrypted = hashlib.md5(password.encode('utf-8')).hexdigest()
+        # 生成一对密钥
+        ## filename为存储私钥的文件名称
+        public_key, _ = key_generate(adminName)
+        if not public_key:
+            return False
+        # 对输入的密码进行加密
+        filename = aes_encrypt(adminName, password,public_key)
+        if not filename:
+            return False
         try:
             sql_pattern = """
-                            INSERT INTO adminsinfo(adminName,Sex,password)
+                            INSERT INTO adminsinfo(adminName,Sex,filename)
                             Values('{0}','{1}','{2}')  
                             """
-            sql = sql_pattern.format(adminName,sex,password_encrypted)
+            sql = sql_pattern.format(adminName,sex,filename)
             # print(sql)
             cur.execute(sql)
             conn.commit()
+            return True
         except Exception as e:
             print('用户注册时产生错误:',e)
             conn.rollback()
+            return False
         finally:
             cur.close()
             conn.close()
     
-    def Admin_login(self,adminID:str,password:str):
+    def Admin_login(self,adminID:str,password:str,private_key:str)->bool:
         '''进行用户登录验证
         
         正确则返回adminName，错误则返回False'''
+        # print('adminID:',adminID)
+        # print('password:',password)
         conn,cur = Model.get_con()
         try:
             sql_pattern = """
@@ -65,8 +80,12 @@ class Model(object):
             result = cur.fetchone()
             # 对输入的密码进行哈希加密验证
             if result:
-                password_encrypted = hashlib.md5(password.encode('utf-8')).hexdigest()
-                if password_encrypted == result[3]:
+                # 获取保存加密后的密码的文件名
+                filename = result[3]
+                # 对数据库中的密码进行解密
+                password_decrypted = aes_decrypt(filename,private_key)
+                # 对输入的密码进行验证
+                if password_decrypted == password:
                     return result[1]  #返回adminName
                 else:
                     return False
@@ -78,28 +97,49 @@ class Model(object):
             cur.close()
             conn.close()
     
-    def change_password(self,adminID:str,old_password:str,new_password:str)->bool:
+    def change_password(self,adminID:str,old_password:str,new_password:str, private_key:str)->bool:
         '''修改密码
         
-        adminID为管理员ID，old_password为旧密码，new_password为新密码'''
+        adminID为管理员ID，old_password为旧密码，new_password为新密码
+        
+        先对数据中的密码进行解密，并验证输入的旧密码的正确性；
+        再对新密码进行加密，并将加密后的密码写入数据库
+        若成功修改，返回True，否则返回False'''
         con,cur = Model.get_con()
         try:
-            # 对旧密码进行哈希加密
-            old_password_encrypted = hashlib.md5(old_password.encode('utf-8')).hexdigest()
-            # 对新密码进行哈希加密
-            new_password_encrypted = hashlib.md5(new_password.encode('utf-8')).hexdigest()
-            sql_pattern = """select * from adminsinfo where adminID='{0}' and password='{1}'"""
-            sql = sql_pattern.format(adminID,old_password_encrypted)
+            # 对旧密码进行正确性验证
+            sql_pattern = """
+                            SELECT * FROM adminsinfo
+                            WHERE adminID='{0}'
+                            """
+            sql = sql_pattern.format(adminID)
             cur.execute(sql)
             result = cur.fetchone()
+            ## 对输入的密码进行哈希加密验证
             if result:
-                sql_pattern = """update adminsinfo set password='{0}' where adminID='{1}'"""
-                sql = sql_pattern.format(new_password_encrypted,adminID)
-                cur.execute(sql)
-                con.commit()
-                return True
-            else:
-                return False
+                # 获取保存加密后的密码的文件名
+                filename = result[3]
+                # 获取用户名
+                adminName = result[1]
+                # 对数据库中的密码进行解密
+                password_decrypted = aes_decrypt(filename,private_key)
+                ## 对输入的旧密码进行验证
+                if old_password != password_decrypted:
+                    return False
+                else:
+                    ## 先生成钥匙对
+                    public_key, _ = key_generate(adminName=adminName)
+                    ## 用生成的公钥对新密码进行加密
+                    filename = aes_encrypt(adminName, new_password,public_key)
+                    sql_pattern = """
+                                    update adminsinfo 
+                                    set filename='{0}'
+                                    where adminID='{1}'
+                                    """
+                    sql = sql_pattern.format(filename, adminID)
+                    cur.execute(sql)
+                    con.commit()
+                    return True
         except Exception as e:
             print('修改密码时产生错误：',e)
             con.rollback()
@@ -347,23 +387,27 @@ class Model(object):
             conn.close()
 
 
-class View_Controller(object):
+class View_Controller(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         '''初始化页面'''
         raise NotImplementedError
 
+    @abc.abstractmethod
     def populate_data(self):
         '''将数据显示到页面上'''
         raise NotImplementedError
 
+    @abc.abstractmethod
     def onInsert(self):
         '''触发数据插入事件'''
         raise NotImplementedError
     
+    @abc.abstractmethod
     def onUpdate(self):
         '''出发数据更新事件'''
         raise NotImplementedError
     
+    @abc.abstractmethod
     def onDelete(self):
         '''触发数据删除事件'''
         raise NotImplementedError

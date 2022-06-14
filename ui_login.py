@@ -2,12 +2,11 @@
 
 登陆成功后跳转到主模块ui_main.py；若需注册，跳转ui_register.py'''
 
-from matplotlib.pyplot import title
 import wx
 import ui_register
 import ui_main
 import MVC
-import sms_main
+import os
 
 model = MVC.Model()
 
@@ -21,17 +20,26 @@ class view_controller(MVC.View_Controller):
             wx.Dialog.__init__(self, parent, title=title, size=(800, 600))
             panel = wx.Panel(self, wx.ID_ANY)
             # 创建控件
-            labelUserID = wx.StaticText(panel, wx.ID_ANY, '用户ID:')
-            self.inputTextUserID = wx.TextCtrl(panel, wx.ID_ANY, '1')
-            labelPassword = wx.StaticText(panel, wx.ID_ANY, '密   码:')
-            self.inputTextPassword = wx.TextCtrl(panel, wx.ID_ANY, '123456')
+            labelUserID = wx.StaticText(panel, wx.ID_ANY, '管理员编号:',size=(90,-1),style=wx.ALIGN_CENTER)
+            self.inputTextUserID = wx.TextCtrl(panel, wx.ID_ANY, '1', size=(200,-1))
+            labelPassword = wx.StaticText(panel, wx.ID_ANY, '请输入密码:',size=(90,-1),style=wx.ALIGN_CENTER)
+            self.inputTextPassword = wx.TextCtrl(panel, wx.ID_ANY, '123456', size=(200,-1))
+            self.selBtn = wx.Button(panel, wx.ID_ANY, label='请上传私钥', size=(95,-1))
+            self.Filename = wx.TextCtrl(panel, wx.ID_ANY, '', style=wx.TE_READONLY, size=(200,-1))
+            self.okBtn = wx.Button(panel, wx.ID_ANY, label='确认上传', size=(95,-1))
+            self.FileContent = wx.TextCtrl(panel, wx.ID_ANY, '', style=(wx.TE_MULTILINE),size=(520,200))
+            labelHint = wx.StaticText(panel, wx.ID_ANY, '  (完成注册后即可生成私钥文件)',size=(300,-1))
 
             loginBtn = wx.Button(panel, wx.ID_ANY, '登录')
             registerBtn = wx.Button(panel, wx.ID_ANY, '注册')
 
-            topSizer = wx.BoxSizer(wx.VERTICAL)
+            mainSizer = wx.BoxSizer(wx.VERTICAL)
+            topSizer = wx.BoxSizer(wx.HORIZONTAL)
+            # RightSizer = wx.BoxSizer(wx.VERTICAL)
             userSizer = wx.BoxSizer(wx.HORIZONTAL)
             passwordSizer = wx.BoxSizer(wx.HORIZONTAL)
+            filenameSizer = wx.BoxSizer(wx.HORIZONTAL)
+            checkSizer = wx.BoxSizer(wx.HORIZONTAL)
             btnSizer = wx.BoxSizer(wx.HORIZONTAL)
 
             #进行几何布局
@@ -42,19 +50,34 @@ class view_controller(MVC.View_Controller):
             userSizer.Add(self.inputTextUserID, proportion=0, flag=wx.ALL, border=5)
             passwordSizer.Add(labelPassword, proportion=0, flag=wx.ALL, border=5)
             passwordSizer.Add(self.inputTextPassword, proportion=1, flag=wx.ALL, border=5)
+            filenameSizer.Add(self.selBtn, proportion=0, flag=wx.ALL, border=5)
+            filenameSizer.Add(self.Filename, proportion=0, flag=wx.ALL, border=5)
+            filenameSizer.Add(labelHint, proportion=0, flag=wx.ALL, border=5)
+            checkSizer.Add(self.okBtn, proportion=0, flag=wx.ALL, border=5)
+            checkSizer.Add(self.FileContent, proportion=0, flag=wx.ALL, border=5)
             btnSizer.Add(loginBtn, proportion=0, flag=wx.ALL, border=5)
             btnSizer.Add(registerBtn, proportion=0, flag=wx.ALL, border=5)
 
             topSizer.Add(userSizer, proportion=0, flag=wx.ALL | wx.CENTER, border=5)
             topSizer.Add(passwordSizer, proportion=0, flag=wx.ALL | wx.CENTER, border=5)
-            topSizer.Add(btnSizer, proportion=0, flag=wx.ALL | wx.CENTER, border=5)
+            # topSizer.Add(filenameSizer, proportion=0, flag=wx.ALL | wx.CENTER, border=5)
 
-            panel.SetSizer(topSizer)
-            topSizer.Fit(self)
+            # RightSizer.Add(filenameSizer, proportion=0, flag=wx.ALL | wx.LEFT, border=5)
+            # RightSizer.Add(checkSizer, proportion=0, flag=wx.ALL | wx.LEFT, border=5)
+
+            mainSizer.Add(topSizer, proportion=0, flag=wx.ALL | wx.LEFT, border=5)
+            mainSizer.Add(filenameSizer, proportion=0, flag=wx.ALL | wx.LEFT, border=5)
+            mainSizer.Add(checkSizer, proportion=0, flag=wx.ALL | wx.LEFT, border=5)
+            mainSizer.Add(btnSizer, proportion=0, flag=wx.ALL | wx.CENTER, border=5)
+
+            panel.SetSizer(mainSizer)
+            mainSizer.Fit(self)
 
             # 绑定事件
             loginBtn.Bind(wx.EVT_BUTTON, self.onLogin)
             registerBtn.Bind(wx.EVT_BUTTON, self.onRegister)
+            self.selBtn.Bind(wx.EVT_BUTTON, self.onSel)
+            self.okBtn.Bind(wx.EVT_BUTTON, self.onOk)
 
         def onLogin(self, event):
             userID = self.inputTextUserID.GetValue()
@@ -66,7 +89,7 @@ class view_controller(MVC.View_Controller):
                 wx.MessageBox('密码不能为空！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
             # 检查用户ID和密码是否正确
-            adminName = model.Admin_login(userID, password)
+            adminName = model.Admin_login(userID, password, self.private_key)
             if not adminName:
                 wx.MessageBox('用户名或密码或角色错误，请重新输入！')
                 self.inputTextUserID.SetFocus()
@@ -81,4 +104,22 @@ class view_controller(MVC.View_Controller):
             frame = ui_register.view_controller.RegisterWindow(parent=None, title='注册')
             frame.Show()
             frame.Center()
+
+        def onSel(self, event):
+            '''事件处理函数：选择私钥文件'''
+            wildcard = 'All files(*.*)|*.*'
+            dlg = wx.FileDialog(None,'select',os.getcwd(),'',wildcard,wx.FD_OPEN)
+            if dlg.ShowModal() == wx.ID_OK:
+                self.Filename.SetValue(dlg.GetPath())
+                dlg.Destroy()
+        
+        def onOk(self, event):
+            '''事件处理函数：确认选择私钥文件'''
+            if len(self.Filename.GetValue())==0:
+                wx.MessageBox('请选择私钥文件！', '提示', wx.OK | wx.ICON_INFORMATION)
+                return None
+            # 读取私钥文件
+            file = open(self.Filename.GetValue())
+            self.private_key = file.read()
+            self.FileContent.SetValue(self.private_key)
         

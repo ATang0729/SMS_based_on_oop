@@ -1,6 +1,5 @@
 '''注册模块'''
 
-from click import password_option
 import MVC
 import wx
 import hashlib
@@ -72,9 +71,12 @@ class view_controller(MVC.View_Controller):
                 self.inputTextadminPw.SetFocus()  #设置焦点事件
             else:
                 # 调用model中Admin_register方法，完成注册
-                model.Admin_register(adminName, adminPw, adminSex)
-                wx.MessageBox('完成注册！', '提示', wx.OK | wx.ICON_INFORMATION)
-                self.Destroy()
+                Flag = model.Admin_register(adminName, adminPw, adminSex)
+                if Flag:
+                    wx.MessageBox('完成注册！', '提示', wx.OK | wx.ICON_INFORMATION)
+                    self.Destroy()
+                else:
+                    wx.MessageBox('注册失败！请程序员检查原因！', '警告', wx.OK | wx.ICON_WARNING)
 
         def OnCancel(self, event):
             '''取消按钮事件'''

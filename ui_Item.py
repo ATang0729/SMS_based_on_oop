@@ -10,7 +10,7 @@ class view_controller(MVC.View_Controller):
 
     #用于在内存中存储信息，并在页面退出时候将信息写入JSON文件，用作数据备份
     #每一次调用实例方法populate_data时，都会重写一次下列数据
-    __items = []  #保存产品信息的列表：[[productID, shelfID]]
+    __items = []  #保存库存信息的列表：[[productID, shelfID]]
 
     class ItemWindow(wx.Dialog):
         """创建库存管理窗口应用程序类"""
@@ -20,12 +20,12 @@ class view_controller(MVC.View_Controller):
             parent为父窗口"""
             self.adminID = userid
             wx.Dialog.__init__(self, parent, title=title, size=(800, 600))
-            panel = wx.Panel(self, wx.ID_ANY)
+            self.panel = wx.Panel(self, wx.ID_ANY)
             # 创建控件
             lblListAction = ['入库管理','出库管理']
-            self.rboxAction = wx.RadioBox(panel, label='操作类型', choices=lblListAction, majorDimension=1, style=wx.RA_SPECIFY_ROWS)
+            self.rboxAction = wx.RadioBox(self.panel, label='操作类型', choices=lblListAction, majorDimension=1, style=wx.RA_SPECIFY_ROWS)
             ## 创建列表框
-            self.listGrade = wx.ListCtrl(panel, wx.ID_ANY, size=(720, 300), style=wx.LC_REPORT)
+            self.listGrade = wx.ListCtrl(self.panel, wx.ID_ANY, size=(720, 300), style=wx.LC_REPORT)
             self.listGrade.InsertColumn(0, '商品编号', width=80)
             self.listGrade.InsertColumn(1, '商品名称', width=80)
             self.listGrade.InsertColumn(2, '货架编号', width=80)
@@ -39,18 +39,18 @@ class view_controller(MVC.View_Controller):
             available_productIDs = model.get_available_goods_info()
             available_shelfIDs = model.get_available_shelves()
             ## 创建输入框
-            labelPID = wx.StaticText(panel, wx.ID_ANY, '商品编号:')
-            self.PID_choice = wx.ComboBox(panel, wx.ID_ANY, size=(120,-1), choices=available_productIDs, style=wx.CB_SORT)
-            labelSID = wx.StaticText(panel, wx.ID_ANY, '货架编号:')
-            self.SID_choice = wx.ComboBox(panel, wx.ID_ANY, size=(120,-1), choices=available_shelfIDs, style=wx.CB_SORT)
-            labelTIME = wx.StaticText(panel, wx.ID_ANY, '操作时间:')
-            self.txtTIME = wx.TextCtrl(panel, wx.ID_ANY, size=(120, -1),style=wx.TE_PROCESS_ENTER)
-            labelUSER = wx.StaticText(panel, wx.ID_ANY, '操作人员:')
-            self.txtUSER = wx.TextCtrl(panel, wx.ID_ANY, size=(120, -1),style=wx.TE_PROCESS_ENTER)
+            labelPID = wx.StaticText(self.panel, wx.ID_ANY, '商品编号:')
+            self.PID_choice = wx.ComboBox(self.panel, wx.ID_ANY, size=(120,-1), choices=available_productIDs, style=wx.CB_SORT)
+            labelSID = wx.StaticText(self.panel, wx.ID_ANY, '货架编号:')
+            self.SID_choice = wx.ComboBox(self.panel, wx.ID_ANY, size=(120,-1), choices=available_shelfIDs, style=wx.CB_SORT)
+            labelTIME = wx.StaticText(self.panel, wx.ID_ANY, '操作时间:')
+            self.txtTIME = wx.TextCtrl(self.panel, wx.ID_ANY, size=(120, -1),style=wx.TE_PROCESS_ENTER)
+            labelUSER = wx.StaticText(self.panel, wx.ID_ANY, '操作人员:')
+            self.txtUSER = wx.TextCtrl(self.panel, wx.ID_ANY, size=(120, -1),style=wx.TE_PROCESS_ENTER)
             ## 创建“入库管理”、“出库管理”和“保存退出”按钮
-            self.btnEnter = wx.Button(panel, wx.ID_ANY, '入库管理')
-            self.btnOut = wx.Button(panel, wx.ID_ANY, '出库管理')
-            self.btnSave = wx.Button(panel, wx.ID_ANY, '保存退出')
+            self.btnEnter = wx.Button(self.panel, wx.ID_ANY, '入库管理')
+            self.btnOut = wx.Button(self.panel, wx.ID_ANY, '出库管理')
+            self.btnSave = wx.Button(self.panel, wx.ID_ANY, '保存退出')
             ## 默认为入库管理，隐藏出库管理的控件，禁止编辑操作时间和操作人员
             self.txtTIME.Disable()
             self.txtUSER.Disable()
@@ -102,8 +102,8 @@ class view_controller(MVC.View_Controller):
             mainSizer.Add(contentSizer, 0, wx.CENTER, 5)
             mainSizer.Add(btnSizer, 0, wx.CENTER, 5)
 
-            # 加入到Panel中
-            panel.SetSizer(mainSizer)
+            # 加入到self.panel中
+            self.panel.SetSizer(mainSizer)
             mainSizer.Fit(self)
 
             #显示库存信息
@@ -111,7 +111,7 @@ class view_controller(MVC.View_Controller):
 
         #定义方法
         def populate_data(self, event=None):
-            '''显示库存信息，使用库存信息视图'''
+            '''显示库存信息，使用库存信息视图，并刷新可用的商品编号和货架编号'''
             # 获取库存信息
             data = model.get_items_info()
             # 清空列表
@@ -143,6 +143,10 @@ class view_controller(MVC.View_Controller):
                 # 将信息存入内存数据
                 view_controller.__items.append([pid,sid])
                 index += 1
+            available_productIDs = model.get_available_goods_info()
+            available_shelfIDs = model.get_available_shelves()
+            self.PID_choice.SetItems(available_productIDs)
+            self.SID_choice.SetItems(available_shelfIDs)
 
         def OnRadioBox(self, event):
             '''事件处理函数：选择操作类型'''
@@ -195,6 +199,10 @@ class view_controller(MVC.View_Controller):
             # 验证无误，允许入库
             model.add_item_info(pid, sid ,adminID=self.adminID)
             self.populate_data()
+
+        def onUpdate(self,event):
+            '''继承父类的方法，但此处不需要实现'''
+            pass
 
         def onDelete(self, event):
             '''事件处理函数：出库管理'''

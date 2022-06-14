@@ -196,12 +196,6 @@ class view_controller(MVC.View_Controller):
             if len(pid) == 0 or len(name) == 0 or len(price) == 0 or len(number) == 0:
                 wx.MessageBox('请输入完整的商品信息！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
-            #检查商品名称是否重复
-            info = model.get_goods_info()
-            pnames = list(zip(*info))[1]
-            if name in pnames:
-                wx.MessageBox('商品名称重复！', '提示', wx.OK | wx.ICON_INFORMATION)
-                return None
             model.alter_good_info(pid, name, price, number)
             self.populate_data()
 

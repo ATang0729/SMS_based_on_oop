@@ -179,7 +179,7 @@ class view_controller(MVC.View_Controller):
             #检查货架编号是否存在
             info = model.get_shelves_info()
             sid = list(zip(*[i for i in info]))[0]
-            if shelf_id not in sid:
+            if shelf_id not in str(sid):
                 wx.MessageBox('货架编号不存在！', '警告', wx.OK | wx.ICON_WARNING)
                 return None
             #检查货架位置是否已存在
