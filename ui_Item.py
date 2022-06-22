@@ -12,7 +12,7 @@ class view_controller(MVC.View_Controller):
     #每一次调用实例方法populate_data时，都会重写一次下列数据
     __items = []  #保存库存信息的列表：[[productID, shelfID]]
 
-    class ItemWindow(wx.Dialog):
+    class Window(wx.Dialog):
         """创建库存管理窗口应用程序类"""
         def __init__(self, parent, title, userid):
             """初始化库存管理窗体
@@ -108,9 +108,9 @@ class view_controller(MVC.View_Controller):
 
             #显示库存信息
             self.populate_data()
-
+    
         #定义方法
-        def populate_data(self, event=None):
+        def populate_data(self):
             '''显示库存信息，使用库存信息视图，并刷新可用的商品编号和货架编号'''
             # 获取库存信息
             data = model.get_items_info()
@@ -187,13 +187,13 @@ class view_controller(MVC.View_Controller):
             # 判断商品是否可以入库
             pids_avail = model.get_available_goods_info()
             if pid not in pids_avail:
-                wx.MessageBox('商品已入库！', '提示', wx.OK | wx.ICON_INFORMATION)
+                wx.MessageBox('商品已入库或不存在！', '提示', wx.OK | wx.ICON_INFORMATION)
                 self.PID_choice.SetFocus()
                 return None
             # 判断货架是否被使用
             sids_avail= model.get_available_shelves()
             if sid not in sids_avail:
-                wx.MessageBox('该货架已被使用！', '提示', wx.OK | wx.ICON_INFORMATION)
+                wx.MessageBox('该货架已被使用或不存在！', '提示', wx.OK | wx.ICON_INFORMATION)
                 self.SID_choice.SetFocus()
                 return None
             # 验证无误，允许入库

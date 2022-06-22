@@ -11,19 +11,20 @@ import os
 model = MVC.Model()
 
 class view_controller(MVC.View_Controller):
-    class LoginWindow(wx.Dialog):
+    class Window(wx.Dialog):
         """创建登录窗口应用程序类"""
         def __init__(self, parent, title):
             """初始化登录窗体
         
             parent为父窗口"""
+            self.private_key = ''
             wx.Dialog.__init__(self, parent, title=title, size=(800, 600))
             panel = wx.Panel(self, wx.ID_ANY)
             # 创建控件
-            labelUserID = wx.StaticText(panel, wx.ID_ANY, '管理员编号:',size=(90,-1),style=wx.ALIGN_CENTER)
-            self.inputTextUserID = wx.TextCtrl(panel, wx.ID_ANY, '1', size=(200,-1))
+            labeladminName = wx.StaticText(panel, wx.ID_ANY, '管理员名称:',size=(90,-1),style=wx.ALIGN_CENTER)
+            self.inputTextadminName = wx.TextCtrl(panel, wx.ID_ANY, 'admin', size=(200,-1))
             labelPassword = wx.StaticText(panel, wx.ID_ANY, '请输入密码:',size=(90,-1),style=wx.ALIGN_CENTER)
-            self.inputTextPassword = wx.TextCtrl(panel, wx.ID_ANY, '123456', size=(200,-1))
+            self.inputTextPassword = wx.TextCtrl(panel, wx.ID_ANY, '123456', size=(200,-1),style=wx.TE_PASSWORD)
             self.selBtn = wx.Button(panel, wx.ID_ANY, label='请上传私钥', size=(95,-1))
             self.Filename = wx.TextCtrl(panel, wx.ID_ANY, '', style=wx.TE_READONLY, size=(200,-1))
             self.okBtn = wx.Button(panel, wx.ID_ANY, label='确认上传', size=(95,-1))
@@ -46,8 +47,8 @@ class view_controller(MVC.View_Controller):
             #参数proportion管理窗口总尺寸，它是相对于别的窗口的改变而言的，它只对wx.BoxSizer有意义。
             #参数flag是一个位图，针对对齐、边框位置，增长有许多不同的标志。
             #参数border是窗口或sizer周围以像素为单位的空间总量。
-            userSizer.Add(labelUserID, proportion=0, flag=wx.ALL, border=5)
-            userSizer.Add(self.inputTextUserID, proportion=0, flag=wx.ALL, border=5)
+            userSizer.Add(labeladminName, proportion=0, flag=wx.ALL, border=5)
+            userSizer.Add(self.inputTextadminName, proportion=0, flag=wx.ALL, border=5)
             passwordSizer.Add(labelPassword, proportion=0, flag=wx.ALL, border=5)
             passwordSizer.Add(self.inputTextPassword, proportion=1, flag=wx.ALL, border=5)
             filenameSizer.Add(self.selBtn, proportion=0, flag=wx.ALL, border=5)
@@ -80,28 +81,32 @@ class view_controller(MVC.View_Controller):
             self.okBtn.Bind(wx.EVT_BUTTON, self.onOk)
 
         def onLogin(self, event):
-            userID = self.inputTextUserID.GetValue()
+            adminName = self.inputTextadminName.GetValue()
             password = self.inputTextPassword.GetValue()
-            if len(userID.strip())==0:
-                wx.MessageBox('用户ID不能为空！', '提示', wx.OK | wx.ICON_INFORMATION)
+            if len(adminName.strip())==0:
+                wx.MessageBox('管理员名称不能为空！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
             if len(password.strip())==0:
                 wx.MessageBox('密码不能为空！', '提示', wx.OK | wx.ICON_INFORMATION)
                 return None
+            # 检查private_key是否为空
+            if self.private_key == '':
+                wx.MessageBox('请"上传私钥”或“确认上传”以读取私钥！', '提示', wx.OK | wx.ICON_INFORMATION)
+                return None
             # 检查用户ID和密码是否正确
-            adminName = model.Admin_login(userID, password, self.private_key)
-            if not adminName:
+            adminID = model.Admin_login(adminName, password, self.private_key)
+            if not adminID:
                 wx.MessageBox('用户名或密码或角色错误，请重新输入！')
-                self.inputTextUserID.SetFocus()
+                self.inputTextadminName.SetFocus()
             else:
                 self.Close(True) #关闭窗口
-                title = '库存管理系统(登录：{0} {1})'.format(userID,adminName)
-                mainFrame = ui_main.view_controller.MainWindow(None, title, userID, adminName)
+                title = '库存管理系统(登录：{0} {1})'.format(adminID,adminName)
+                mainFrame = ui_main.view_controller.Window(None, title, adminID, adminName)
                 mainFrame.Show()
                 mainFrame.Center()
 
         def onRegister(self, event):
-            frame = ui_register.view_controller.RegisterWindow(parent=None, title='注册')
+            frame = ui_register.view_controller.Window(parent=None, title='注册')
             frame.Show()
             frame.Center()
 

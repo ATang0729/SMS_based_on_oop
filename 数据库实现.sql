@@ -9,7 +9,7 @@ create table adminsinfo
     constraint UserInfo_UserID_uindex
         unique (AdminID)
 )
-    comment '数据库管理员基本信息表' auto_increment = 4;
+    comment '数据库管理员基本信息表' auto_increment = 1;
 
 create table products
 (
@@ -24,7 +24,7 @@ create table products
     constraint products_productID_uindex
         unique (ProductID)
 )
-    comment '商品基本信息表' auto_increment = 8;
+    comment '商品基本信息表' auto_increment = 1;
 
 create table shelves
 (
@@ -37,7 +37,7 @@ create table shelves
     constraint Shelves_shelfID_uindex
         unique (ShelfID)
 )
-    comment '货架基本信息' auto_increment = 12;
+    comment '货架基本信息' auto_increment = 1;
 
 create table items
 (
@@ -67,12 +67,13 @@ begin
 end ;
 
 -- 创建索引--------------------------------------------------
+/*
 create index OperatorID
     on items (OperatorID);
 
 create index ShelfID
     on items (ShelfID);
-
+*/
 -- 创建视图--------------------------------------------------
 create definer = root@localhost view items_report_detailed as
 select `库存管理系统`.`items`.`ProductID`  AS `产品ID`,

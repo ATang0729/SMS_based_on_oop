@@ -13,7 +13,7 @@ class view_controller(MVC.View_Controller):
     #每一次调用实例方法populate_products_info时，都会重写一次下列数据
     __shelves = {}  #保存产品信息的字典：shelf_id:location
 
-    class ShelfWindow(wx.Dialog):
+    class Window(wx.Dialog):
         """创建货架管理窗口应用程序类"""
         def __init__(self, parent, title):
             """初始化货架管理窗体

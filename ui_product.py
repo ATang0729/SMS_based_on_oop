@@ -13,7 +13,7 @@ class view_controller(MVC.View_Controller):
     #每一次调用实例方法populate_data时，都会重写一次下列数据
     __products = {}  #保存产品信息的字典：product_id:name,price,number,isPlaced
 
-    class ProductWindow(wx.Dialog):
+    class Window(wx.Dialog):
         """创建商品管理窗口应用程序类"""
         def __init__(self, parent, title, userid):
             '''初始化程序类'''

@@ -10,7 +10,7 @@ class App(wx.App):
     '''创建主程序类'''
     def OnInit(self):
         '''初始化系统'''
-        frame = ui_login.view_controller.LoginWindow(parent=None, title='系统登录')
+        frame = ui_login.view_controller.Window(parent=None, title='系统登录')
         frame.Show()
         frame.Center()
         return True

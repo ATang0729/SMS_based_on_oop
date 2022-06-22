@@ -12,7 +12,7 @@ from wx.adv import AnimationCtrl
 model = MVC.Model()
 
 class view_controller(MVC.View_Controller):
-    class MainWindow(wx.Frame):
+    class Window(wx.Frame):
         """创建主窗口程序类"""
         def __init__(self, parent, title, userid, username):
             wx.Frame.__init__(self, parent, title=title, size=(515, 420))
@@ -59,13 +59,13 @@ class view_controller(MVC.View_Controller):
         def OnReLogin(self, event):
             '''重新登录'''
             self.Destroy()
-            LoginFrame = ui_login.view_controller.LoginWindow(parent=None, title='系统登录')
+            LoginFrame = ui_login.view_controller.Window(parent=None, title='系统登录')
             LoginFrame.Show()
             LoginFrame.Center()
         
         def OnChangePwd(self, event):
             '''修改密码'''
-            ChangePwd = ui_changePwd.view_controller.ChangePwdWindow(parent=None, title='修改密码', userid = self.userid)
+            ChangePwd = ui_changePwd.view_controller.Window(parent=None, title='修改密码', userid = self.userid)
             ChangePwd.Show()
             ChangePwd.Center()
         
@@ -75,19 +75,19 @@ class view_controller(MVC.View_Controller):
         
         def OnProduct(self, event):
             '''商品管理'''
-            ProductFrame = ui_product.view_controller.ProductWindow(parent=None, title='商品管理', userid = self.userid)
+            ProductFrame = ui_product.view_controller.Window(parent=None, title='商品管理', userid = self.userid)
             ProductFrame.Show()
             ProductFrame.Center()
 
         def OnItem(self, event):
             '''库存管理'''
-            ItemFrame = ui_Item.view_controller.ItemWindow(parent=None, title='库存管理', userid = self.userid)
+            ItemFrame = ui_Item.view_controller.Window(parent=None, title='库存管理', userid = self.userid)
             ItemFrame.Show()
             ItemFrame.Center()
 
         def OnShelf(self, event):
             '''货架管理'''
-            ShelfFrame = ui_Shelf.view_controller.ShelfWindow(parent=None, title='货架管理')
+            ShelfFrame = ui_Shelf.view_controller.Window(parent=None, title='货架管理')
             ShelfFrame.Show()
             ShelfFrame.Center()
 

@@ -2,12 +2,12 @@
 
 import MVC
 import wx
-import hashlib
+
 
 model = MVC.Model()
 
 class view_controller(MVC.View_Controller):
-    class RegisterWindow(wx.Dialog):
+    class Window(wx.Dialog):
         '''创建注册窗口程序类'''
         def __init__(self, parent, title):
             wx.Dialog.__init__(self, parent, title=title, size=(300, 200))
@@ -64,6 +64,21 @@ class view_controller(MVC.View_Controller):
             adminPw = self.inputTextadminPw.GetValue()
             adminPw2 = self.inputTextadminPw2.GetValue()
             adminSex = self.inputTextadminSex.GetValue()
+            # 判断是否为空
+            if adminName == '' or adminPw == '' or adminPw2 == '' or adminSex == '':
+                wx.MessageBox('请输入完整信息！', '提示', wx.OK | wx.ICON_INFORMATION)
+                return False
+            # 获取数据库中的所有管理员姓名
+            adminNameList = model.get_all_adminName()
+            # 判断输入的管理员姓名是否已存在
+            if adminName in adminNameList:
+                wx.MessageBox('该管理员已存在，请重新输入！', '提示', wx.OK | wx.ICON_INFORMATION)
+                self.inputTextadminName.SetValue('')
+                self.inputTextadminPw.SetValue('')
+                self.inputTextadminPw2.SetValue('')
+                self.inputTextadminSex.SetValue('')
+                self.inputTextadminName.SetFocus()
+                return False
             if adminPw != adminPw2:
                 wx.MessageBox('两次密码不一致，请重新输入！', '提示', wx.OK | wx.ICON_INFORMATION)
                 self.inputTextadminPw.SetValue('')

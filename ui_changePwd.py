@@ -7,7 +7,7 @@ import os
 model = MVC.Model()
 
 class view_controller(MVC.View_Controller):
-    class ChangePwdWindow(wx.Frame):
+    class Window(wx.Frame):
         '''创建修改密码窗体类'''
         def __init__(self, parent, title, userid):
             '''初始化窗体'''

@@ -7,6 +7,7 @@
 import pymysql
 import abc
 from RSA_AES import key_generate, aes_encrypt, aes_decrypt
+import wx
 
 class Model(object):
     '''定义了所有与数据库交互的操作'''
@@ -28,11 +29,31 @@ class Model(object):
             print('连接时产生错误：',e)
 
 ###############完成登录注册功能######################
+    def get_all_adminName(self)->list[str]:
+        '''获取所有管理员姓名'''
+        conn,cur = Model.get_con()
+        try:
+            sql_pattern = """
+                            SELECT adminName FROM adminsinfo
+                            """
+            sql = sql_pattern
+            cur.execute(sql)
+            result = cur.fetchall()
+            name_list = []
+            for i in result:
+                name_list.append(i[0])
+            return name_list
+        except Exception as e:
+            print('获取所有管理员姓名时产生错误：',e)
+        finally:
+            cur.close()
+            conn.close()
+    
     def Admin_register(self,adminName:str,password:str,sex:str)->bool:
         '''完成管理员注册
         
         adminName为管理员姓名，sex为其性别
-        password为输入的密码，密码会在采用md5算法进行哈希加密后被存入数据库
+        password为输入的密码，密码会在经过RSA、AES混合加密后被存入数据库
         
         返回布尔值，若注册成功，返回True；否则返回False'''
         conn,cur = Model.get_con()
@@ -63,22 +84,21 @@ class Model(object):
             cur.close()
             conn.close()
     
-    def Admin_login(self,adminID:str,password:str,private_key:str)->bool:
+    def Admin_login(self,adminName:str,password:str,private_key:str)->bool:
         '''进行用户登录验证
         
-        正确则返回adminName，错误则返回False'''
-        # print('adminID:',adminID)
-        # print('password:',password)
+        正确则返回adminID，错误则返回False'''
+
         conn,cur = Model.get_con()
         try:
             sql_pattern = """
                             SELECT * FROM adminsinfo
-                            WHERE adminID='{0}'
+                            WHERE adminName='{0}'
                             """
-            sql = sql_pattern.format(adminID)
+            sql = sql_pattern.format(adminName)
             cur.execute(sql)
             result = cur.fetchone()
-            # 对输入的密码进行哈希加密验证
+            # 对输入的密码进行验证
             if result:
                 # 获取保存加密后的密码的文件名
                 filename = result[3]
@@ -86,7 +106,7 @@ class Model(object):
                 password_decrypted = aes_decrypt(filename,private_key)
                 # 对输入的密码进行验证
                 if password_decrypted == password:
-                    return result[1]  #返回adminName
+                    return result[0]  #返回adminID
                 else:
                     return False
             else:
@@ -388,29 +408,30 @@ class Model(object):
 
 
 class View_Controller(metaclass=abc.ABCMeta):
-    def __init__(self) -> None:
-        '''初始化页面'''
-        raise NotImplementedError
+    class Window(wx.Frame):
+        def __init__(self) -> None:
+            '''初始化页面'''
+            raise NotImplementedError
 
-    @abc.abstractmethod
-    def populate_data(self):
-        '''将数据显示到页面上'''
-        raise NotImplementedError
+        @abc.abstractmethod
+        def populate_data(self):
+            '''将数据显示到页面上'''
+            raise NotImplementedError
 
-    @abc.abstractmethod
-    def onInsert(self):
-        '''触发数据插入事件'''
-        raise NotImplementedError
-    
-    @abc.abstractmethod
-    def onUpdate(self):
-        '''出发数据更新事件'''
-        raise NotImplementedError
-    
-    @abc.abstractmethod
-    def onDelete(self):
-        '''触发数据删除事件'''
-        raise NotImplementedError
+        @abc.abstractmethod
+        def onInsert(self):
+            '''触发数据插入事件'''
+            raise NotImplementedError
+        
+        @abc.abstractmethod
+        def onUpdate(self):
+            '''触发数据更新事件'''
+            raise NotImplementedError
+        
+        @abc.abstractmethod
+        def onDelete(self):
+            '''触发数据删除事件'''
+            raise NotImplementedError
 
 
 if __name__ == '__main__':
